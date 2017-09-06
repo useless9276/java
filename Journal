@@ -1,0 +1,161 @@
+package com.sklyarenko.journal;
+
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Comparator;
+
+/**
+ * Created by JOhN on 08.08.2017.
+ */
+public class Journal {
+    private Record[] arr = new Record[5];
+    int number = 0;//Number of filled cells in the array
+
+    public void add(Record r) {
+        if (arr.length < number + 1) {
+            arr = Arrays.copyOf(arr, arr.length + 5);
+        }
+        arr[number++] = r;
+    }
+
+    public void add(Journal j) {
+        Record[] arr = j.getArr();
+        for (int i = 0; i < j.getLength(); i++) {
+            this.add(arr[i]);
+        }
+        /*Record[] concat = concatArray(this.arr, arr);
+        if (concat.length > arr.length) arr = Arrays.copyOf(arr, (arr.length + concat.length) + 5);
+        this.arr = concat;*/
+    }
+
+    private Record[] concatArray(Record[] r1, Record[] r2) {
+        if (r1 == null) return r2;
+        if (r2 == null) return r1;
+        Record[] r = new Record[r1.length + r2.length];
+        System.arraycopy(r1, 0, r, 0, r1.length);
+        System.arraycopy(r2, 0, r, r1.length, r2.length);
+        return r;
+    }
+
+    public void remove(Record r) {
+        for (int i = 0; i < this.arr.length; i++) {
+            if (this.arr[i] == r) {
+                this.arr[i] = null;
+                break;
+            }
+        }
+    }
+
+    public void remove(int index) {
+        this.arr[index] = null;
+    }
+
+    public void remove(int fromIndex, int toIndex) {
+        for (int i = fromIndex; i < toIndex; i++) {
+            this.arr[i] = null;
+        }
+    }
+
+    public void removeAll() {
+        for (int i = 0; i < arr.length; i++) {
+            this.arr[i] = null;
+        }
+    }
+
+    public Journal filter(String s) {
+        Record r = new Record(s);
+        for (int i = 0; i < this.number; i++) {
+            if (!this.getArr()[i].equals(r)) {
+                remove(i);
+            }
+        }
+        return this;
+    }
+
+
+    public Journal filter(Date fromDate, Date toDate) {
+        for (int i = 0; i < this.number; i++) {
+            if (this.getArr()[i].getDate().getTime() < fromDate.getTime()) {
+                this.remove(i);
+            } else if (this.getArr()[i].getDate().getTime() > toDate.getTime()) {
+                this.remove(i);
+            }
+        }
+        return this;
+    }
+
+    public void sortByDate() {
+        Arrays.sort(arr, sortDate);
+    }
+
+    public void sortByImportanceDate() {
+        sortByDate();
+        Arrays.sort(arr, sortImportance);
+    }
+
+    public void sortByImportanceSourceDate() {
+        sortByImportanceDate();
+        Arrays.sort(arr, sortSource);
+    }
+
+    public void sortBySourceDate() {
+        sortByDate();
+        Arrays.sort(arr, sortSource);
+    }
+
+    public Record[] getArr() {
+        return arr;
+    }
+
+    public int getNumber() {
+        return number;
+    }
+
+    public int getLength() {
+        return arr.length;
+    }
+
+    private static Comparator<Record> sortDate = new Comparator<Record>() {
+        @Override
+        public int compare(Record r1, Record r2) {
+            if (r1 != null && r2 != null) return (r1.getDate().compareTo(r2.getDate()));
+            else return compareFlag(r1, r2);
+        }
+    };
+    private static Comparator<Record> sortImportance = new Comparator<Record>() {
+        @Override
+        public int compare(Record r1, Record r2) {
+            if (r1 != null && r2 != null) return (r1.getPriority() - (r2.getPriority()));
+            else return compareFlag(r1, r2);
+
+        }
+    };
+    private static Comparator<Record> sortSource = new Comparator<Record>() {
+        @Override
+        public int compare(Record r1, Record r2) {
+            if (r1 != null && r2 != null) return (r1.getSource().compareTo(r2.getSource()));
+            else return compareFlag(r1, r2);
+        }
+    };
+
+    private static int compareFlag(Record r1, Record r2) {
+        if (r1 == null && r2 != null) return 1;
+        else return -1;
+    }
+
+    private void removeEmptyItems(Record[] records) {
+        int j = 0;
+        for (int i = 0; i < records.length; i++) {
+            if (records[i] != null) {
+                records[j++] = records[i];
+            }
+        }
+        this.arr = Arrays.copyOf(records, j);
+    }
+
+    @Override
+    public String toString() {
+        removeEmptyItems(arr);
+        return Arrays.toString(arr);
+    }
+}
