@@ -1,0 +1,174 @@
+package com.sklyarenko.journal;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+/**
+ * Created by JOhN on 08.08.2017.
+ */
+enum Priority {
+    PRIORITY1(".    "),
+    PRIORITY2("!    "),
+    PRIORITY3("!!!  "),
+    PRIORITY4("!!!!!");
+    private String priority;
+
+    Priority(String priority) {
+        this.priority = priority;
+    }
+
+    public String getPriority() {
+        return priority;
+    }
+
+    public static Priority getPriority(int numberOfPriority) {
+        return values()[numberOfPriority - 1];
+    }
+
+    public static Priority getPriority(String stringPriority) {
+      /*  int i = values().length;
+        for (Priority priority : values()) {
+            if (priority.getPriority().trim().equals(stringPriority.trim()))
+                i = priority.ordinal();
+        }
+        if (i == values().length) throw new IllegalArgumentException("Priority is not correct");
+        return values()[i];*/
+        switch (stringPriority) {
+            case ".":
+                return PRIORITY1;
+            case "!":
+                return PRIORITY2;
+            case "!!!":
+                return PRIORITY3;
+            case "!!!!!":
+                return PRIORITY4;
+            default:
+                throw new IllegalArgumentException("Priority is not correct");
+        }
+    }
+}
+
+public class Record {
+
+    private static final String errorWrongStringFormat = "Incorrect string format!";
+    private static final String errorNullPointer = "can't be null ";
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private Date date;
+    private int priority;
+    private String source;
+    private String errorMessage;
+    private Priority priority1;
+
+    public Record(Date date, int priority, String source, String errorMessage) {
+        validatingRecord(date, priority, source, errorMessage);
+    }
+
+    public Record(String record) {
+        if (record == null) throw new IllegalArgumentException(errorWrongStringFormat);
+        checkStringRecord(record);
+    }
+
+    private static void check(boolean b, String message) {
+        if (b) throw new IllegalArgumentException(message);
+    }
+
+    //Validating data
+    private void validatingRecord(Date date, int priority, String source, String errorMessage) {
+        check(date == null, "Date " + errorNullPointer);
+        check(priority < 1 || priority > 4, "Priority should be from 1 to 4");
+        check(source == null || source.isEmpty() || source.contains(" "), "Source " +
+                errorNullPointer + " or empty or contain spaces");
+        check(errorMessage == null || errorMessage.isEmpty() || errorMessage.contains("\n"), "Message " +
+                errorNullPointer + "or empty or contain linebreaks");
+        this.date = new Date(date.getTime());
+        this.priority = priority;
+        this.source = source;
+        this.errorMessage = errorMessage;
+        this.priority1 = Priority.getPriority(priority);
+    }
+
+    //Separation of a line into 4 separate objects
+    private void checkStringRecord(String record) {
+        record = record.trim();
+        int space = record.indexOf(" ");
+        if (space == -1) throw new IllegalArgumentException(errorWrongStringFormat);
+        String date1 = record.substring(0, space);
+        record = record.substring(space + 1).trim();
+        space = record.indexOf(" ");
+        if (space == -1) throw new IllegalArgumentException(errorWrongStringFormat);
+        String date2 = record.substring(0, space);
+        String date = date1 + " " + date2;
+        record = record.substring(space + 1).trim();
+        space = record.indexOf(" ");
+        if (space == -1) throw new IllegalArgumentException(errorWrongStringFormat);
+        String priority = record.substring(0, space).trim();
+        record = record.substring(space + 1).trim();
+        space = record.indexOf(" ");
+        if (space == -1) throw new IllegalArgumentException(errorWrongStringFormat);
+        String source = record.substring(0, space).trim();
+        record = record.substring(space + 1).trim();
+        if (record == null) throw new IllegalArgumentException(errorWrongStringFormat);
+        String errorMessage = record;
+
+        // Checking Date format
+        int spaceData = date.indexOf(" ");
+        if (spaceData == -1) throw new IllegalArgumentException(errorWrongStringFormat);
+        try {
+            this.date = dateFormat.parse(date);
+        } catch (ParseException e) {
+            throw new IllegalArgumentException(errorWrongStringFormat);
+        }
+        //Checking priority format
+        this.priority1 = Priority.getPriority(priority);
+        //Checking source format
+        if (source.trim().isEmpty() || source.contains(" "))
+            throw new IllegalArgumentException(errorWrongStringFormat);
+        this.source = source;
+        //Checking errorMesage format
+        if (errorMessage.trim().isEmpty() || errorMessage.contains("\n"))
+            throw new IllegalArgumentException(errorWrongStringFormat);
+        this.errorMessage = errorMessage;
+    }
+
+    public Date getDate() {
+        return date;
+    }
+
+    public int getPriority() {
+        this.priority=priority1.ordinal()+1;
+        return priority;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    private String getPriorityString() {
+        return this.priority1.getPriority();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass() || date == null || source == null || errorMessage == null)
+            return false;
+        Record record = (Record) o;
+        if (priority != record.priority) return false;
+        if (!date.equals(record.date)) return false;
+        if (!source.equals(record.source)) return false;
+        return errorMessage.equals(record.errorMessage);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s %s %s %s", dateFormat.format(this.date),
+                getPriorityString(), source, errorMessage);
+    }
+
+
+}
